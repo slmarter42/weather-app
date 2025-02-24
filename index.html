@@ -46,7 +46,7 @@
             document.getElementById("currentDate").innerText = now.toLocaleDateString("en-US", options);
         }
 
-        function fetchWeather(city = "Cookeville, TN") {
+        function fetchWeather(city = "Cookeville") {
             const cityInput = document.getElementById("cityInput").value.trim();
             if (cityInput) city = cityInput;
 
