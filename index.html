@@ -46,51 +46,59 @@
             document.getElementById("currentDate").innerText = now.toLocaleDateString("en-US", options);
         }
 
-        function fetchWeather(city = "Cookeville") {
-            const cityInput = document.getElementById("cityInput").value.trim();
-            if (cityInput) city = cityInput;
-
-            fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`)
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.results || data.results.length === 0) {
-                        throw new Error("City not found");
-                    }
-
-                    const { latitude, longitude, name } = data.results[0];
-
-                    return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,is_day,rain,showers,snowfall,cloud_cover,wind_speed_10m&hourly=temperature_2m,precipitation,rain,showers,snowfall,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`)
-                        .then(response => response.json())
-                        .then(weatherData => ({ weatherData, name }));
-                })
-                .then(({ weatherData, name }) => {
-                    document.getElementById("cityName").innerText = name;
-                    document.getElementById("temperature").innerText = `${weatherData.current.temperature_2m}°F`;
-                    document.getElementById("windSpeed").innerText = weatherData.current.wind_speed_10m;
-                    document.getElementById("rain").innerText = weatherData.current.rain ?? "0";
-                    document.getElementById("humidity").innerText = weatherData.current.relative_humidity_2m;
-                    document.getElementById("cloudCover").innerText = weatherData.current.cloud_cover;
-                    document.getElementById("timeOfDay").innerText = weatherData.current.is_day ? "Daytime 🌞" : "Nighttime 🌙";
-
-                    let forecastHTML = "";
-                    for (let i = 0; i < 5; i++) {
-                        const hourTime = new Date(weatherData.hourly.time[i]).getHours();
-                        forecastHTML += `
-                            <div class="col-2 text-center p-2 border rounded bg-white">
-                                <p class="fw-bold">${hourTime}:00</p>
-                                <i class="bi bi-thermometer-half"></i>
-                                <p>${weatherData.hourly.temperature_2m[i]}°F</p>
-                                <i class="bi bi-wind"></i>
-                                <p>${weatherData.hourly.wind_speed_10m[i]} mph</p>
-                            </div>
-                        `;
-                    }
-                    document.getElementById("hourlyForecast").innerHTML = forecastHTML;
-                })
-                .catch(error => {
-                    alert(error.message);
-                });
+        function fetchWeather(city) {
+        const cityInput = document.getElementById("cityInput");
+        if (!city) {
+            city = cityInput.value.trim() || "Cookeville, TN"; // Ensure default city is set
         }
+
+        fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.results || data.results.length === 0) {
+                    throw new Error("City not found");
+                }
+
+                const { latitude, longitude, name } = data.results[0];
+
+                return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,is_day,rain,showers,snowfall,cloud_cover,wind_speed_10m&hourly=temperature_2m,precipitation,rain,showers,snowfall,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch`)
+                    .then(response => response.json())
+                    .then(weatherData => ({ weatherData, name }));
+            })
+            .then(({ weatherData, name }) => {
+                document.getElementById("cityName").innerText = name;
+                cityInput.value = name; // Set input box to show current city
+                document.getElementById("temperature").innerText = `${weatherData.current.temperature_2m}°F`;
+                document.getElementById("windSpeed").innerText = weatherData.current.wind_speed_10m;
+                document.getElementById("rain").innerText = weatherData.current.rain ?? "0";
+                document.getElementById("humidity").innerText = weatherData.current.relative_humidity_2m;
+                document.getElementById("cloudCover").innerText = weatherData.current.cloud_cover;
+                document.getElementById("timeOfDay").innerText = weatherData.current.is_day ? "Daytime 🌞" : "Nighttime 🌙";
+
+                let forecastHTML = "";
+                for (let i = 0; i < 5; i++) {
+                    const hourTime = new Date(weatherData.hourly.time[i]).getHours();
+                    forecastHTML += `
+                        <div class="col-2 text-center p-2 border rounded bg-white">
+                            <p class="fw-bold">${hourTime}:00</p>
+                            <i class="bi bi-thermometer-half"></i>
+                            <p>${weatherData.hourly.temperature_2m[i]}°F</p>
+                            <i class="bi bi-wind"></i>
+                            <p>${weatherData.hourly.wind_speed_10m[i]} mph</p>
+                        </div>
+                    `;
+                }
+                document.getElementById("hourlyForecast").innerHTML = forecastHTML;
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+    }
+
+    // **Ensure Cookeville, TN loads by default when the page first loads**
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchWeather("Cookeville, TN");
+    });
 
         displayCurrentDate();
         fetchWeather();
